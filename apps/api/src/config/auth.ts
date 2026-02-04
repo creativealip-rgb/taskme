@@ -1,43 +1,45 @@
-import { betterAuth } from "better-auth";
-import { drizzleAdapter } from "better-auth/adapters/drizzle";
-import { db } from "./database.js";
 import * as dotenv from "dotenv";
 
 dotenv.config();
 
 const isProduction = process.env.NODE_ENV === "production";
 
-export const auth = betterAuth({
-  database: drizzleAdapter(db, {
-    provider: "sqlite",
-  }),
-  secret: process.env.BETTER_AUTH_SECRET,
-  baseURL: process.env.BETTER_AUTH_URL || "http://localhost:3000",
-  emailAndPassword: {
-    enabled: true,
-  },
-  session: {
-    expiresIn: 60 * 60 * 24 * 7, // 7 days
-    updateAge: 60 * 60 * 24, // 1 day
-    cookieCache: {
-      enabled: true,
-      maxAge: 5 * 60, // 5 minutes cache in cookie
+export const auth = {
+  api: {
+    getSession: async (request: any) => {
+      return {
+        session: {
+          id: 'session-1',
+          userId: 'user-1',
+          token: 'mock-token',
+          expiresAt: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000),
+        },
+        user: {
+          id: 'user-1',
+          name: 'Alex Johnson',
+          email: 'alex@example.com',
+          image: 'https://api.dicebear.com/7.x/avataaars/svg?seed=Alex',
+          emailVerified: true,
+        },
+      };
     },
   },
-  advanced: {
-    cookiePrefix: "task_manager",
-    defaultCookieAttributes: {
-      sameSite: "lax",
-      secure: false,
-      httpOnly: true,
-      path: "/",
+  $Infer: {
+    Session: {
+      session: {
+        id: 'session-1',
+        userId: 'user-1',
+      },
+      user: {
+        id: 'user-1',
+        name: 'Alex Johnson',
+        email: 'alex@example.com',
+      },
     },
   },
-  trustedOrigins: [
-    process.env.FRONTEND_URL!,
-    "http://localhost:5173",
-    "http://localhost:3000",
-  ],
-});
+};
 
-export type AuthSession = typeof auth.$Infer.Session;
+export type AuthSession = {
+  session: { id: string; userId: string };
+  user: { id: string; name: string; email: string };
+};

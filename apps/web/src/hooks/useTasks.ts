@@ -1,7 +1,7 @@
 import { useState, useEffect, useCallback } from 'react';
-import { tasksApi, ApiError } from '../services/api';
+import { tasksApi, subtasksApi, ApiError } from '../services/api';
 import { useAuth } from '../contexts/AuthContext';
-import { Task, TaskStatus, TaskPriority, TaskFilters } from '../types/task';
+import { Task, TaskStatus, TaskPriority, TaskFilters, Subtask } from '../types/task';
 import { ApiValidationError } from '../components/TaskModal';
 
 interface UseTasksReturn {
@@ -13,14 +13,15 @@ interface UseTasksReturn {
   updateTask: (id: string, updates: Partial<Task>) => Promise<Task>;
   deleteTask: (id: string) => Promise<void>;
   moveTask: (id: string, newStatus: TaskStatus) => Promise<void>;
-  // eslint-disable-next-line no-unused-vars
-  changePriority: (_id: string, _newPriority: TaskPriority) => Promise<void>;
-  // eslint-disable-next-line no-unused-vars
-  getTasksByStatus: (_status: TaskStatus) => Task[];
+  changePriority: (id: string, newPriority: TaskPriority) => Promise<void>;
+  getTasksByStatus: (status: TaskStatus) => Task[];
   searchTasks: (query: string) => Task[];
   filterTasks: (filters: TaskFilters) => Task[];
   refreshTasks: (filters?: Partial<TaskFilters>) => Promise<void>;
   clearErrors: () => void;
+  addSubtask: (taskId: string, title: string) => Promise<Subtask>;
+  toggleSubtask: (subtaskId: string) => Promise<void>;
+  deleteSubtask: (subtaskId: string) => Promise<void>;
 }
 
 export const useTasks = (): UseTasksReturn => {
@@ -139,6 +140,65 @@ export const useTasks = (): UseTasksReturn => {
     });
   }, [tasks]);
 
+  const addSubtask = useCallback(async (taskId: string, title: string): Promise<Subtask> => {
+    try {
+      setError(null);
+      const response = await subtasksApi.create(taskId, title);
+      const newSubtask = response.data;
+
+      setTasks(prev => prev.map(task => {
+        if (task.id === taskId) {
+          return {
+            ...task,
+            subtasks: [...(task.subtasks || []), newSubtask],
+          };
+        }
+        return task;
+      }));
+
+      return newSubtask;
+    } catch (err) {
+      const errorMessage = err instanceof Error ? err.message : 'Failed to add subtask';
+      setError(errorMessage);
+      throw err;
+    }
+  }, []);
+
+  const toggleSubtask = useCallback(async (subtaskId: string): Promise<void> => {
+    try {
+      setError(null);
+      const response = await subtasksApi.toggle(subtaskId);
+      const updatedSubtask = response.data;
+
+      setTasks(prev => prev.map(task => ({
+        ...task,
+        subtasks: (task.subtasks || []).map(st =>
+          st.id === subtaskId ? updatedSubtask : st
+        ),
+      })));
+    } catch (err) {
+      const errorMessage = err instanceof Error ? err.message : 'Failed to toggle subtask';
+      setError(errorMessage);
+      throw err;
+    }
+  }, []);
+
+  const deleteSubtask = useCallback(async (subtaskId: string): Promise<void> => {
+    try {
+      setError(null);
+      await subtasksApi.delete(subtaskId);
+
+      setTasks(prev => prev.map(task => ({
+        ...task,
+        subtasks: (task.subtasks || []).filter(st => st.id !== subtaskId),
+      })));
+    } catch (err) {
+      const errorMessage = err instanceof Error ? err.message : 'Failed to delete subtask';
+      setError(errorMessage);
+      throw err;
+    }
+  }, []);
+
   return {
     tasks,
     isLoading,
@@ -154,5 +214,8 @@ export const useTasks = (): UseTasksReturn => {
     filterTasks,
     refreshTasks: fetchTasks,
     clearErrors,
+    addSubtask,
+    toggleSubtask,
+    deleteSubtask,
   };
 };

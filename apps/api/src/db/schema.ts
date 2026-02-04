@@ -101,6 +101,8 @@ export const tasks = sqliteTable(
     userId: text('user_id')
       .notNull()
       .references(() => user.id, { onDelete: 'cascade' }),
+    workspaceId: text('workspace_id')
+      .references(() => workspaces.id, { onDelete: 'cascade' }),
     title: text('title').notNull(),
     description: text('description'),
     status: text('status').notNull().default('todo'),
@@ -114,7 +116,10 @@ export const tasks = sqliteTable(
       .$onUpdate(() => new Date())
       .notNull(),
   },
-  (table) => [index('tasks_userId_idx').on(table.userId)]
+  (table) => [
+    index('tasks_userId_idx').on(table.userId),
+    index('tasks_workspaceId_idx').on(table.workspaceId)
+  ]
 );
 
 // Relations
@@ -138,11 +143,76 @@ export const accountRelations = relations(account, ({ one }) => ({
   }),
 }));
 
-export const tasksRelations = relations(tasks, ({ one }) => ({
+export const tasksRelations = relations(tasks, ({ one, many }) => ({
   user: one(user, {
     fields: [tasks.userId],
     references: [user.id],
   }),
+  subtasks: many(subtasks),
+}));
+
+// Subtasks Table
+export const subtasks = sqliteTable(
+  'subtasks',
+  {
+    id: text('id').primaryKey(),
+    taskId: text('task_id')
+      .notNull()
+      .references(() => tasks.id, { onDelete: 'cascade' }),
+    title: text('title').notNull(),
+    completed: integer('completed', { mode: 'boolean' })
+      .default(false)
+      .notNull(),
+    createdAt: integer('created_at', { mode: 'timestamp_ms' })
+      .default(sql`(cast(unixepoch('subsecond') * 1000 as integer))`)
+      .notNull(),
+    updatedAt: integer('updated_at', { mode: 'timestamp_ms' })
+      .default(sql`(cast(unixepoch('subsecond') * 1000 as integer))`)
+      .$onUpdate(() => new Date())
+      .notNull(),
+  },
+  (table) => [index('subtasks_taskId_idx').on(table.taskId)]
+);
+
+export const subtasksRelations = relations(subtasks, ({ one }) => ({
+  task: one(tasks, {
+    fields: [subtasks.taskId],
+    references: [tasks.id],
+  }),
+}));
+
+// Workspaces Table
+export const workspaces = sqliteTable(
+  'workspaces',
+  {
+    id: text('id').primaryKey(),
+    name: text('name').notNull(),
+    description: text('description'),
+    ownerId: text('owner_id')
+      .notNull()
+      .references(() => user.id, { onDelete: 'cascade' }),
+    isPublic: integer('is_public', { mode: 'boolean' })
+      .default(false)
+      .notNull(),
+    shareToken: text('share_token').unique(),
+    createdAt: integer('created_at', { mode: 'timestamp_ms' })
+      .default(sql`(cast(unixepoch('subsecond') * 1000 as integer))`)
+      .notNull(),
+    updatedAt: integer('updated_at', { mode: 'timestamp_ms' })
+      .default(sql`(cast(unixepoch('subsecond') * 1000 as integer))`)
+      .$onUpdate(() => new Date())
+      .notNull(),
+  },
+  (table) => [index('workspaces_ownerId_idx').on(table.ownerId)]
+);
+
+// Relations
+export const workspacesRelations = relations(workspaces, ({ one, many }) => ({
+  owner: one(user, {
+    fields: [workspaces.ownerId],
+    references: [user.id],
+  }),
+  tasks: many(tasks),
 }));
 
 // Types
@@ -156,3 +226,7 @@ export type Verification = typeof verification.$inferSelect;
 export type NewVerification = typeof verification.$inferInsert;
 export type Task = typeof tasks.$inferSelect;
 export type NewTask = typeof tasks.$inferInsert;
+export type Subtask = typeof subtasks.$inferSelect;
+export type NewSubtask = typeof subtasks.$inferInsert;
+export type Workspace = typeof workspaces.$inferSelect;
+export type NewWorkspace = typeof workspaces.$inferInsert;

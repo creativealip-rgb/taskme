@@ -1,0 +1,270 @@
+import { Task, TaskStatus, TaskPriority, User, Workspace } from '@/types';
+
+export const USERS: User[] = [
+  {
+    id: 'user-1',
+    name: 'Alex Johnson',
+    email: 'alex@example.com',
+    image: 'https://api.dicebear.com/7.x/avataaars/svg?seed=Alex',
+  },
+  {
+    id: 'user-2',
+    name: 'Sarah Williams',
+    email: 'sarah@example.com',
+    image: 'https://api.dicebear.com/7.x/avataaars/svg?seed=Sarah',
+  },
+  {
+    id: 'user-3',
+    name: 'Mike Chen',
+    email: 'mike@example.com',
+    image: 'https://api.dicebear.com/7.x/avataaars/svg?seed=Mike',
+  },
+  {
+    id: 'user-4',
+    name: 'Emily Davis',
+    email: 'emily@example.com',
+    image: 'https://api.dicebear.com/7.x/avataaars/svg?seed=Emily',
+  },
+];
+
+export const PROJECTS: Workspace[] = [
+  {
+    id: 'project-1',
+    name: 'Website Redesign',
+    description: 'Complete overhaul of the company website with modern UI',
+    ownerId: 'user-1',
+    isPublic: false,
+    color: '#6366f1',
+    createdAt: '2024-01-15T10:00:00Z',
+  },
+  {
+    id: 'project-2',
+    name: 'Mobile App Development',
+    description: 'Cross-platform mobile app for iOS and Android',
+    ownerId: 'user-2',
+    isPublic: false,
+    color: '#10b981',
+    createdAt: '2024-02-01T10:00:00Z',
+  },
+  {
+    id: 'project-3',
+    name: 'Marketing Campaign',
+    description: 'Q2 digital marketing and social media strategy',
+    ownerId: 'user-1',
+    isPublic: true,
+    color: '#f59e0b',
+    createdAt: '2024-02-15T10:00:00Z',
+  },
+  {
+    id: 'project-4',
+    name: 'Internal Tools',
+    description: 'Automation and productivity tools for internal use',
+    ownerId: 'user-3',
+    isPublic: false,
+    color: '#ef4444',
+    createdAt: '2024-03-01T10:00:00Z',
+  },
+];
+
+const today = new Date();
+const yesterday = new Date(today);
+yesterday.setDate(yesterday.getDate() - 1);
+const tomorrow = new Date(today);
+tomorrow.setDate(tomorrow.getDate() + 1);
+const nextWeek = new Date(today);
+nextWeek.setDate(nextWeek.getDate() + 7);
+
+export const TASKS: Task[] = [
+  {
+    id: 'task-1',
+    userId: 'user-1',
+    workspaceId: 'project-1',
+    title: 'Design homepage wireframes',
+    description: 'Create low-fidelity wireframes for the new homepage layout',
+    status: TaskStatus.DONE,
+    priority: TaskPriority.HIGH,
+    dueDate: yesterday.toISOString().split('T')[0],
+    createdAt: '2024-01-20T10:00:00Z',
+    updatedAt: '2024-02-01T15:30:00Z',
+  },
+  {
+    id: 'task-2',
+    userId: 'user-2',
+    workspaceId: 'project-1',
+    title: 'Implement navigation menu',
+    description: 'Build responsive navigation component with dropdowns',
+    status: TaskStatus.IN_PROGRESS,
+    priority: TaskPriority.HIGH,
+    dueDate: today.toISOString().split('T')[0],
+    createdAt: '2024-01-25T10:00:00Z',
+    updatedAt: '2024-02-03T09:00:00Z',
+  },
+  {
+    id: 'task-3',
+    userId: 'user-1',
+    workspaceId: 'project-2',
+    title: 'Set up CI/CD pipeline',
+    description: 'Configure GitHub Actions for automated testing and deployment',
+    status: TaskStatus.IN_PROGRESS,
+    priority: TaskPriority.MEDIUM,
+    dueDate: tomorrow.toISOString().split('T')[0],
+    createdAt: '2024-02-05T10:00:00Z',
+    updatedAt: '2024-02-04T14:00:00Z',
+  },
+  {
+    id: 'task-4',
+    userId: 'user-3',
+    workspaceId: 'project-2',
+    title: 'User authentication module',
+    description: 'Implement OAuth 2.0 authentication with social login support',
+    status: TaskStatus.TODO,
+    priority: TaskPriority.HIGH,
+    dueDate: nextWeek.toISOString().split('T')[0],
+    createdAt: '2024-02-08T10:00:00Z',
+    updatedAt: '2024-02-08T10:00:00Z',
+  },
+  {
+    id: 'task-5',
+    userId: 'user-4',
+    workspaceId: 'project-3',
+    title: 'Create social media calendar',
+    description: 'Plan and schedule posts for Instagram and LinkedIn',
+    status: TaskStatus.DONE,
+    priority: TaskPriority.LOW,
+    dueDate: yesterday.toISOString().split('T')[0],
+    createdAt: '2024-02-10T10:00:00Z',
+    updatedAt: '2024-02-02T11:00:00Z',
+  },
+  {
+    id: 'task-6',
+    userId: 'user-2',
+    workspaceId: 'project-3',
+    title: 'Write blog post draft',
+    description: 'Draft article about industry trends for Q2',
+    status: TaskStatus.IN_PROGRESS,
+    priority: TaskPriority.MEDIUM,
+    dueDate: today.toISOString().split('T')[0],
+    createdAt: '2024-02-12T10:00:00Z',
+    updatedAt: '2024-02-04T16:00:00Z',
+  },
+  {
+    id: 'task-7',
+    userId: 'user-1',
+    workspaceId: 'project-4',
+    title: 'Automate report generation',
+    description: 'Create Python script to generate weekly summary reports',
+    status: TaskStatus.TODO,
+    priority: TaskPriority.LOW,
+    dueDate: nextWeek.toISOString().split('T')[0],
+    createdAt: '2024-02-14T10:00:00Z',
+    updatedAt: '2024-02-14T10:00:00Z',
+  },
+  {
+    id: 'task-8',
+    userId: 'user-3',
+    workspaceId: 'project-1',
+    title: 'Optimize image assets',
+    description: 'Compress and convert images to WebP format',
+    status: TaskStatus.DONE,
+    priority: TaskPriority.LOW,
+    dueDate: yesterday.toISOString().split('T')[0],
+    createdAt: '2024-02-15T10:00:00Z',
+    updatedAt: '2024-02-03T10:00:00Z',
+  },
+  {
+    id: 'task-9',
+    userId: 'user-4',
+    workspaceId: 'project-2',
+    title: 'Design app icon set',
+    description: 'Create scalable vector icons for the mobile app',
+    status: TaskStatus.IN_PROGRESS,
+    priority: TaskPriority.MEDIUM,
+    dueDate: tomorrow.toISOString().split('T')[0],
+    createdAt: '2024-02-16T10:00:00Z',
+    updatedAt: '2024-02-04T13:00:00Z',
+  },
+  {
+    id: 'task-10',
+    userId: 'user-1',
+    workspaceId: 'project-4',
+    title: 'Set up monitoring dashboard',
+    description: 'Configure Grafana for server performance tracking',
+    status: TaskStatus.TODO,
+    priority: TaskPriority.HIGH,
+    dueDate: nextWeek.toISOString().split('T')[0],
+    createdAt: '2024-02-18T10:00:00Z',
+    updatedAt: '2024-02-18T10:00:00Z',
+  },
+  {
+    id: 'task-11',
+    userId: 'user-2',
+    workspaceId: 'project-1',
+    title: 'Implement dark mode',
+    description: 'Add theme toggle with system preference detection',
+    status: TaskStatus.IN_PROGRESS,
+    priority: TaskPriority.MEDIUM,
+    dueDate: tomorrow.toISOString().split('T')[0],
+    createdAt: '2024-02-19T10:00:00Z',
+    updatedAt: '2024-02-04T15:00:00Z',
+  },
+  {
+    id: 'task-12',
+    userId: 'user-3',
+    workspaceId: 'project-3',
+    title: 'Email newsletter template',
+    description: 'Design responsive email template for monthly newsletter',
+    status: TaskStatus.DONE,
+    priority: TaskPriority.LOW,
+    dueDate: yesterday.toISOString().split('T')[0],
+    createdAt: '2024-02-20T10:00:00Z',
+    updatedAt: '2024-02-02T09:00:00Z',
+  },
+  {
+    id: 'task-13',
+    userId: 'user-4',
+    workspaceId: 'project-2',
+    title: 'Write API documentation',
+    description: 'Document REST endpoints with examples',
+    status: TaskStatus.TODO,
+    priority: TaskPriority.MEDIUM,
+    dueDate: nextWeek.toISOString().split('T')[0],
+    createdAt: '2024-02-21T10:00:00Z',
+    updatedAt: '2024-02-21T10:00:00Z',
+  },
+  {
+    id: 'task-14',
+    userId: 'user-1',
+    workspaceId: 'project-1',
+    title: 'Accessibility audit',
+    description: 'Run Lighthouse audits and fix WCAG compliance issues',
+    status: TaskStatus.TODO,
+    priority: TaskPriority.HIGH,
+    dueDate: nextWeek.toISOString().split('T')[0],
+    createdAt: '2024-02-22T10:00:00Z',
+    updatedAt: '2024-02-22T10:00:00Z',
+  },
+  {
+    id: 'task-15',
+    userId: 'user-2',
+    workspaceId: 'project-4',
+    title: 'Database optimization',
+    description: 'Add indexes and optimize slow queries',
+    status: TaskStatus.IN_PROGRESS,
+    priority: TaskPriority.HIGH,
+    dueDate: tomorrow.toISOString().split('T')[0],
+    createdAt: '2024-02-23T10:00:00Z',
+    updatedAt: '2024-02-04T11:00:00Z',
+  },
+];
+
+export function getTasksByProject(projectId: string): Task[] {
+  return TASKS.filter(task => task.workspaceId === projectId);
+}
+
+export function getProjectById(projectId: string): Workspace | undefined {
+  return PROJECTS.find(project => project.id === projectId);
+}
+
+export function getUserById(userId: string): User | undefined {
+  return USERS.find(user => user.id === userId);
+}

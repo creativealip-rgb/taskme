@@ -16,7 +16,8 @@ const createTaskSchema = z.object({
   description: z.string().max(2000).optional(),
   status: z.enum(['todo', 'in_progress', 'done']).optional(),
   priority: z.enum(['low', 'medium', 'high']).optional(),
-  dueDate: z.string().datetime().optional().nullable(),
+  dueDate: z.string().optional().nullable(),
+  workspaceId: z.string().optional(),
 });
 
 const updateTaskSchema = z.object({
@@ -24,7 +25,7 @@ const updateTaskSchema = z.object({
   description: z.string().max(2000).optional().nullable(),
   status: z.enum(['todo', 'in_progress', 'done']).optional(),
   priority: z.enum(['low', 'medium', 'high']).optional(),
-  dueDate: z.string().datetime().optional().nullable(),
+  dueDate: z.string().optional().nullable(),
 });
 
 const taskFiltersSchema = z.object({
@@ -83,7 +84,7 @@ export class TasksController {
 
       const task = await taskService.createTask(userId, {
         ...input,
-        dueDate: input.dueDate ? new Date(input.dueDate) : undefined,
+        dueDate: input.dueDate || undefined,
       });
 
       res.status(201).json({
@@ -103,7 +104,7 @@ export class TasksController {
 
       const task = await taskService.updateTask(userId, id, {
         ...input,
-        dueDate: input.dueDate === null ? null : input.dueDate ? new Date(input.dueDate) : undefined,
+        dueDate: input.dueDate === null ? null : input.dueDate || undefined,
       });
 
       if (!task) {

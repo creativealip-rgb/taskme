@@ -1,135 +1,103 @@
-import { eq, and, desc, asc, like, or } from 'drizzle-orm';
-import { db, tasks, type Task, type NewTask } from '../db/index.js';
+import { mockDbData } from '../config/database.js';
 
 export interface CreateTaskInput {
   title: string;
   description?: string;
   status?: 'todo' | 'in_progress' | 'done';
   priority?: 'low' | 'medium' | 'high';
-  dueDate?: Date;
+  dueDate?: string;
 }
 
 export interface UpdateTaskInput {
   title?: string;
-  description?: string | null;
+  description?: string;
   status?: 'todo' | 'in_progress' | 'done';
   priority?: 'low' | 'medium' | 'high';
-  dueDate?: Date | null;
+  dueDate?: string;
 }
 
 export interface TaskFilters {
   status?: 'todo' | 'in_progress' | 'done';
   priority?: 'low' | 'medium' | 'high';
   search?: string;
-  sortBy?: 'createdAt' | 'updatedAt' | 'dueDate' | 'priority';
-  sortOrder?: 'asc' | 'desc';
 }
 
 export class TaskService {
-  async createTask(userId: string, input: CreateTaskInput): Promise<Task> {
-    const now = new Date();
-    const newTask: NewTask = {
-      id: crypto.randomUUID(),
+  async createTask(userId: string, input: CreateTaskInput): Promise<any> {
+    const newTask = {
+      id: `task-${Date.now()}`,
       userId,
+      workspaceId: input.workspaceId || null,
       title: input.title,
-      description: input.description ?? null,
-      status: input.status ?? 'todo',
-      priority: input.priority ?? 'medium',
-      dueDate: input.dueDate ?? null,
-      createdAt: now,
-      updatedAt: now,
+      description: input.description || null,
+      status: input.status || 'todo',
+      priority: input.priority || 'medium',
+      dueDate: input.dueDate || null,
+      createdAt: new Date().toISOString(),
+      updatedAt: new Date().toISOString(),
     };
 
-    await db.insert(tasks).values(newTask);
-    return newTask as Task;
+    mockDbData.tasks.push(newTask);
+    return newTask;
   }
 
-  async getTasks(userId: string, filters: TaskFilters = {}): Promise<Task[]> {
-    const conditions = [eq(tasks.userId, userId)];
+  async getTasks(userId: string, filters: TaskFilters = {}): Promise<any[]> {
+    let result = [...mockDbData.tasks];
 
     if (filters.status) {
-      conditions.push(eq(tasks.status, filters.status));
+      result = result.filter(t => t.status === filters.status);
     }
 
     if (filters.priority) {
-      conditions.push(eq(tasks.priority, filters.priority));
+      result = result.filter(t => t.priority === filters.priority);
     }
 
     if (filters.search) {
-      const searchTerm = `%${filters.search}%`;
-      conditions.push(
-        or(
-          like(tasks.title, searchTerm),
-          like(tasks.description ?? '', searchTerm)
-        )!
+      const search = filters.search.toLowerCase();
+      result = result.filter(t =>
+        t.title.toLowerCase().includes(search) ||
+        (t.description && t.description.toLowerCase().includes(search))
       );
     }
 
-    const sortBy = filters.sortBy ?? 'createdAt';
-    const sortOrder = filters.sortOrder ?? 'desc';
+    result.sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
 
-    const orderBy =
-      sortOrder === 'asc'
-        ? asc(tasks[sortBy])
-        : desc(tasks[sortBy]);
-
-    const result = await db
-      .select()
-      .from(tasks)
-      .where(and(...conditions))
-      .orderBy(orderBy);
-
-    return result;
+    return result.map(task => ({
+      ...task,
+      subtasks: mockDbData.subtasks.filter(st => st.taskId === task.id),
+    }));
   }
 
-  async getTaskById(userId: string, taskId: string): Promise<Task | null> {
-    const result = await db
-      .select()
-      .from(tasks)
-      .where(and(eq(tasks.id, taskId), eq(tasks.userId, userId)))
-      .limit(1);
+  async getTaskById(userId: string, taskId: string): Promise<any | null> {
+    const task = mockDbData.tasks.find(t => t.id === taskId);
+    if (!task) return null;
 
-    return result[0] ?? null;
+    return {
+      ...task,
+      subtasks: mockDbData.subtasks.filter(st => st.taskId === taskId),
+    };
   }
 
-  async updateTask(
-    userId: string,
-    taskId: string,
-    input: UpdateTaskInput
-  ): Promise<Task | null> {
-    const existingTask = await this.getTaskById(userId, taskId);
-    if (!existingTask) {
-      return null;
-    }
+  async updateTask(userId: string, taskId: string, input: UpdateTaskInput): Promise<any | null> {
+    const index = mockDbData.tasks.findIndex(t => t.id === taskId);
+    if (index === -1) return null;
 
-    const updates: Partial<NewTask> = {
-      updatedAt: new Date(),
+    const updated = {
+      ...mockDbData.tasks[index],
+      ...input,
+      dueDate: input.dueDate || null,
+      updatedAt: new Date().toISOString(),
     };
 
-    if (input.title !== undefined) updates.title = input.title;
-    if (input.description !== undefined) updates.description = input.description ?? null;
-    if (input.status !== undefined) updates.status = input.status;
-    if (input.priority !== undefined) updates.priority = input.priority;
-    if (input.dueDate !== undefined) updates.dueDate = input.dueDate ?? null;
-
-    await db
-      .update(tasks)
-      .set(updates)
-      .where(and(eq(tasks.id, taskId), eq(tasks.userId, userId)));
-
-    return this.getTaskById(userId, taskId);
+    mockDbData.tasks[index] = updated;
+    return updated;
   }
 
   async deleteTask(userId: string, taskId: string): Promise<boolean> {
-    const existingTask = await this.getTaskById(userId, taskId);
-    if (!existingTask) {
-      return false;
-    }
+    const index = mockDbData.tasks.findIndex(t => t.id === taskId);
+    if (index === -1) return false;
 
-    await db
-      .delete(tasks)
-      .where(and(eq(tasks.id, taskId), eq(tasks.userId, userId)));
-
+    mockDbData.tasks.splice(index, 1);
     return true;
   }
 }

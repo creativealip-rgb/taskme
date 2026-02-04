@@ -12,7 +12,8 @@ export enum TaskPriority {
 
 export enum ViewMode {
   KANBAN = 'kanban',
-  LIST = 'list'
+  LIST = 'list',
+  CALENDAR = 'calendar'
 }
 
 export interface Task {
@@ -22,6 +23,16 @@ export interface Task {
   status: TaskStatus;
   priority: TaskPriority;
   dueDate?: string;
+  createdAt?: string;
+  updatedAt?: string;
+  subtasks?: Subtask[];
+}
+
+export interface Subtask {
+  id: string;
+  taskId: string;
+  title: string;
+  completed: boolean;
   createdAt?: string;
   updatedAt?: string;
 }
@@ -48,4 +59,15 @@ export interface User {
 export interface ApiResponse<T> {
   data: T;
   message?: string;
+}
+
+export interface Workspace {
+  id: string;
+  name: string;
+  description?: string;
+  ownerId: string;
+  isPublic: boolean;
+  shareToken?: string;
+  createdAt?: string;
+  updatedAt?: string;
 }

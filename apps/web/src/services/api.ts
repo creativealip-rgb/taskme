@@ -1,4 +1,4 @@
-import { Task, TaskFilters, ApiResponse } from '../types/task';
+import { Task, TaskFilters, ApiResponse, Subtask, Workspace } from '../types/task';
 import { ApiValidationError } from '../components/TaskModal';
 
 // Add type declaration for import.meta.env
@@ -103,5 +103,83 @@ export const tasksApi = {
     return fetchWithAuth(`/api/tasks/${id}`, {
       method: 'DELETE',
     });
+  },
+};
+
+export const subtasksApi = {
+  async getByTaskId(taskId: string): Promise<ApiResponse<Subtask[]>> {
+    return fetchWithAuth(`/api/subtasks/task/${taskId}`);
+  },
+
+  async create(taskId: string, title: string): Promise<ApiResponse<Subtask>> {
+    return fetchWithAuth('/api/subtasks', {
+      method: 'POST',
+      body: JSON.stringify({ taskId, title }),
+    });
+  },
+
+  async update(id: string, updates: Partial<Subtask>): Promise<ApiResponse<Subtask>> {
+    return fetchWithAuth(`/api/subtasks/${id}`, {
+      method: 'PATCH',
+      body: JSON.stringify(updates),
+    });
+  },
+
+  async toggle(id: string): Promise<ApiResponse<Subtask>> {
+    return fetchWithAuth(`/api/subtasks/${id}/toggle`, {
+      method: 'POST',
+    });
+  },
+
+  async delete(id: string): Promise<ApiResponse<void>> {
+    return fetchWithAuth(`/api/subtasks/${id}`, {
+      method: 'DELETE',
+    });
+  },
+};
+
+export const workspacesApi = {
+  async getAll(): Promise<ApiResponse<Workspace[]>> {
+    return fetchWithAuth('/api/workspaces');
+  },
+
+  async getById(id: string): Promise<ApiResponse<Workspace>> {
+    return fetchWithAuth(`/api/workspaces/${id}`);
+  },
+
+  async create(name: string, description?: string): Promise<ApiResponse<Workspace>> {
+    return fetchWithAuth('/api/workspaces', {
+      method: 'POST',
+      body: JSON.stringify({ name, description }),
+    });
+  },
+
+  async update(id: string, updates: Partial<Pick<Workspace, 'name' | 'description' | 'isPublic'>>): Promise<ApiResponse<Workspace>> {
+    return fetchWithAuth(`/api/workspaces/${id}`, {
+      method: 'PATCH',
+      body: JSON.stringify(updates),
+    });
+  },
+
+  async generateShareToken(id: string): Promise<ApiResponse<{ token: string }>> {
+    return fetchWithAuth(`/api/workspaces/${id}/share-token`, {
+      method: 'POST',
+    });
+  },
+
+  async togglePublic(id: string): Promise<ApiResponse<{ isPublic: boolean }>> {
+    return fetchWithAuth(`/api/workspaces/${id}/toggle-public`, {
+      method: 'POST',
+    });
+  },
+
+  async delete(id: string): Promise<ApiResponse<void>> {
+    return fetchWithAuth(`/api/workspaces/${id}`, {
+      method: 'DELETE',
+    });
+  },
+
+  async getPublicByToken(token: string): Promise<ApiResponse<{ workspace: Workspace; tasks: Task[] }>> {
+    return fetchWithAuth(`/api/workspaces/public/${token}`);
   },
 };

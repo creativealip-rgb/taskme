@@ -1,16 +1,13 @@
 import { useState } from 'react';
 import { TaskPriority, TaskStatus, Task } from '../types/task';
+import { subtasksApi } from '../services/api';
 
 interface TaskCardProps {
   task: Task;
-  // eslint-disable-next-line no-unused-vars
-  onEdit: (_task: Task) => void;
-  // eslint-disable-next-line no-unused-vars
-  onDelete: (_taskId: string) => void;
-  // eslint-disable-next-line no-unused-vars
-  onStatusChange?: (_taskId: string, _newStatus: TaskStatus) => void;
-  // eslint-disable-next-line no-unused-vars
-  onPriorityChange?: (_taskId: string, _newPriority: TaskPriority) => void;
+  onEdit: (task: Task) => void;
+  onDelete: (taskId: string) => void;
+  onStatusChange?: (taskId: string, newStatus: TaskStatus) => void;
+  onPriorityChange?: (taskId: string, newPriority: TaskPriority) => void;
   isKanban?: boolean;
 }
 
@@ -82,6 +79,8 @@ const statusIcons: Record<TaskStatus, React.ReactNode> = {
 
 export const TaskCard = ({ task, onEdit, onDelete, onPriorityChange, isKanban = false }: TaskCardProps) => {
   const [isPriorityOpen, setIsPriorityOpen] = useState(false);
+  const [localSubtasks, setLocalSubtasks] = useState(task.subtasks || []);
+
   const formatDate = (dateString?: string): string | null => {
     if (!dateString) return null;
     const date = new Date(dateString);
@@ -98,19 +97,32 @@ export const TaskCard = ({ task, onEdit, onDelete, onPriorityChange, isKanban = 
     setIsPriorityOpen(false);
   };
 
+  const handleToggleSubtask = async (subtaskId: string, e: React.MouseEvent) => {
+    e.stopPropagation();
+    try {
+      const response = await subtasksApi.toggle(subtaskId);
+      setLocalSubtasks(prev => prev.map(st =>
+        st.id === subtaskId ? response.data : st
+      ));
+    } catch (err) {
+      console.error('Failed to toggle subtask:', err);
+    }
+  };
+
+  const completedSubtasks = localSubtasks.filter(st => st.completed).length;
+  const hasSubtasks = localSubtasks.length > 0;
+
   return (
-    <div 
+    <div
       className={`
-        group bg-white rounded-xl border border-gray-100 
+        group bg-white rounded-xl border border-gray-100
         shadow-sm hover:shadow-lg hover:-translate-y-0.5
         transition-all duration-200 ease-out cursor-pointer
         ${isOverdue ? 'ring-1 ring-rose-200' : ''}
       `}
       onClick={() => onEdit(task)}
     >
-      {/* Card Content */}
       <div className="p-4">
-        {/* Header: Title and Delete Button */}
         <div className="flex justify-between items-start gap-2 mb-3">
           <h3 className="font-semibold text-gray-900 text-sm leading-snug line-clamp-2 flex-1">
             {task.title}
@@ -121,8 +133,8 @@ export const TaskCard = ({ task, onEdit, onDelete, onPriorityChange, isKanban = 
               onDelete(task.id);
             }}
             className="
-              opacity-0 group-hover:opacity-100 
-              text-gray-400 hover:text-rose-500 
+              opacity-0 group-hover:opacity-100
+              text-gray-400 hover:text-rose-500
               transition-all duration-150 p-1 -mr-1 -mt-1 rounded-md hover:bg-rose-50
             "
           >
@@ -131,20 +143,53 @@ export const TaskCard = ({ task, onEdit, onDelete, onPriorityChange, isKanban = 
             </svg>
           </button>
         </div>
-        
-        {/* Description */}
+
         {task.description && (
           <p className="text-gray-500 text-xs mb-4 line-clamp-2 leading-relaxed">
             {task.description}
           </p>
         )}
-        
-        {/* Footer: Priority Dropdown and Date */}
+
+        {hasSubtasks && (
+          <div className="mb-4 space-y-1.5">
+            {localSubtasks.slice(0, 3).map((subtask) => (
+              <div
+                key={subtask.id}
+                className="flex items-center gap-2 cursor-pointer hover:bg-gray-50 rounded-lg p-1 -mx-1 transition-colors"
+                onClick={(e) => handleToggleSubtask(subtask.id, e)}
+              >
+                <div className={`
+                  w-4 h-4 rounded-full border-2 flex items-center justify-center flex-shrink-0 transition-colors
+                  ${subtask.completed
+                    ? 'bg-emerald-500 border-emerald-500'
+                    : 'border-gray-300 hover:border-emerald-400'}
+                `}>
+                  {subtask.completed && (
+                    <svg className="w-2.5 h-2.5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M5 13l4 4L19 7" />
+                    </svg>
+                  )}
+                </div>
+                <span className={`
+                  text-xs flex-1 line-clamp-1 transition-colors
+                  ${subtask.completed ? 'text-gray-400 line-through' : 'text-gray-600'}
+                `}>
+                  {subtask.title}
+                </span>
+              </div>
+            ))}
+            {localSubtasks.length > 3 && (
+              <p className="text-xs text-gray-400 pl-6">
+                +{localSubtasks.length - 3} more subtasks
+              </p>
+            )}
+          </div>
+        )}
+
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-2 flex-wrap">
-            {/* Priority Dropdown */}
             {isKanban && onPriorityChange ? (
-              <div 
+              <div
                 className="relative"
                 onClick={(e) => e.stopPropagation()}
               >
@@ -162,11 +207,10 @@ export const TaskCard = ({ task, onEdit, onDelete, onPriorityChange, isKanban = 
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
                   </svg>
                 </button>
-                
-                {/* Dropdown Menu */}
+
                 {isPriorityOpen && (
                   <>
-                    <div 
+                    <div
                       className="fixed inset-0 z-40"
                       onClick={() => setIsPriorityOpen(false)}
                     />
@@ -210,7 +254,6 @@ export const TaskCard = ({ task, onEdit, onDelete, onPriorityChange, isKanban = 
                 )}
               </div>
             ) : (
-              /* Static Priority Badge for non-kanban or when callback not provided */
               <span className={`
                 inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium border
                 ${priority.bgColor} ${priority.borderColor} ${priority.color}
@@ -219,8 +262,7 @@ export const TaskCard = ({ task, onEdit, onDelete, onPriorityChange, isKanban = 
                 {priority.label}
               </span>
             )}
-            
-            {/* Status Badge (only in list view) */}
+
             {!isKanban && (
               <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium bg-gray-100 text-gray-700">
                 {statusIcons[task.status]}
@@ -228,26 +270,31 @@ export const TaskCard = ({ task, onEdit, onDelete, onPriorityChange, isKanban = 
               </span>
             )}
           </div>
-          
-          {/* Due Date */}
-          {task.dueDate && (
-            <span className={`
-              inline-flex items-center gap-1.5 text-xs font-medium
-              ${isOverdue ? 'text-rose-600 bg-rose-50 px-2 py-1 rounded-full' : 'text-gray-400'}
-            `}>
-              <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
-              </svg>
-              {formatDate(task.dueDate)}
-            </span>
-          )}
+
+          <div className="flex items-center gap-2">
+            {hasSubtasks && (
+              <span className="text-xs text-gray-400">
+                {completedSubtasks}/{localSubtasks.length}
+              </span>
+            )}
+            {task.dueDate && (
+              <span className={`
+                inline-flex items-center gap-1.5 text-xs font-medium
+                ${isOverdue ? 'text-rose-600 bg-rose-50 px-2 py-1 rounded-full' : 'text-gray-400'}
+              `}>
+                <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                </svg>
+                {formatDate(task.dueDate)}
+              </span>
+            )}
+          </div>
         </div>
       </div>
-      
-      {/* Bottom Accent Line */}
+
       <div className={`
-        h-1 w-full 
-        ${task.priority === TaskPriority.HIGH ? 'bg-rose-400' : 
+        h-1 w-full
+        ${task.priority === TaskPriority.HIGH ? 'bg-rose-400' :
           task.priority === TaskPriority.MEDIUM ? 'bg-amber-400' : 'bg-emerald-400'}
       `} />
     </div>
