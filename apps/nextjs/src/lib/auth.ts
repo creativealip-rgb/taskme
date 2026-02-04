@@ -1,23 +1,29 @@
-import { betterAuth } from 'better-auth';
-import { DrizzleAdapter } from '@auth/libsql-adapter';
-import { db } from '@/db';
-
-export const auth = betterAuth({
-  database: DrizzleAdapter(db, {
-    provider: 'sqlite',
-  }),
-  session: {
-    expiresIn: 60 * 60 * 24 * 7, // 7 days
-    updateAge: 60 * 60 * 24, // 1 day
+export const auth = {
+  api: {
+    getSession: async () => {
+      return {
+        session: {
+          id: 'session-1',
+          userId: 'user-1',
+        },
+        user: {
+          id: 'user-1',
+          name: 'Alex Johnson',
+          email: 'alex@example.com',
+          image: 'https://api.dicebear.com/7.x/avataaars/svg?seed=Alex',
+        },
+      };
+    },
   },
-  pages: {
-    signIn: '/',
-  },
-  trustedOrigins: [
-    process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000',
-  ],
-  plugins: [],
-});
+};
 
-export type Session = typeof auth.$Infer.Session;
-export type User = typeof auth.$Infer.User;
+export type Session = {
+  session: { id: string; userId: string };
+  user: { id: string; name: string; email: string };
+};
+
+export type User = {
+  id: string;
+  name: string;
+  email: string;
+};
