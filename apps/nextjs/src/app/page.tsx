@@ -12,6 +12,7 @@ import { RecentActivity } from '@/components/dashboard/RecentActivity';
 import { getTasks, createTask, updateTask, deleteTask, updateTaskStatus } from '@/actions/taskActions';
 import { getWorkspaces } from '@/actions/workspaceActions';
 import { Calendar, CheckCircle2, Clock, FolderKanban } from 'lucide-react';
+import { ClientLayout } from '@/components/layout/ClientLayout';
 
 export default function DashboardPage() {
   const [viewMode, setViewMode] = useState<string>(ViewMode.KANBAN);
@@ -119,7 +120,7 @@ export default function DashboardPage() {
   const totalProjects = new Set(tasks.map(t => t.workspaceId).filter(Boolean)).size;
 
   return (
-    <>
+    <ClientLayout>
       <GreetingHeader />
 
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
@@ -237,6 +238,6 @@ export default function DashboardPage() {
         onSave={handleSaveTask}
         task={editingTask}
       />
-    </>
+    </ClientLayout>
   );
 }

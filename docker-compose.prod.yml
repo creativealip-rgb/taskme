@@ -1,0 +1,39 @@
+version: '3.8'
+services:
+  taskme-api:
+    build:
+      context: ./apps/api
+      dockerfile: Dockerfile
+    networks:
+      - dokploy-network
+    environment:
+      - PORT=3000
+      - NODE_ENV=production
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.taskme-api.rule=Host(`api.taskme.local`) || PathPrefix(`/api`)"
+      - "traefik.http.routers.taskme-api.entrypoints=web"
+      - "traefik.http.services.taskme-api.loadbalancer.server.port=3000"
+    restart: unless-stopped
+
+  taskme-web:
+    build:
+      context: ./apps/nextjs
+      dockerfile: Dockerfile
+    networks:
+      - dokploy-network
+    environment:
+      - NEXT_PUBLIC_API_URL=http://api.taskme.local
+      - PORT=3000
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.taskme-web.rule=Host(`taskme.local`)"
+      - "traefik.http.routers.taskme-web.entrypoints=web"
+      - "traefik.http.services.taskme-web.loadbalancer.server.port=3000"
+    restart: unless-stopped
+    depends_on:
+      - taskme-api
+
+networks:
+  dokploy-network:
+    external: true

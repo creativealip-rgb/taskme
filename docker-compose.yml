@@ -1,0 +1,33 @@
+version: '3.8'
+services:
+  taskme-api:
+    build:
+      context: .
+      target: api
+    ports:
+      - "3003:3000"
+    environment:
+      - NODE_ENV=production
+      - PORT=3000
+    restart: unless-stopped
+    networks:
+      - taskme-network
+
+  taskme-web:
+    build:
+      context: .
+      target: web
+    ports:
+      - "3004:3002"
+    environment:
+      - NODE_ENV=production
+      - NEXT_PUBLIC_API_URL=http://localhost:3003
+    restart: unless-stopped
+    networks:
+      - taskme-network
+    depends_on:
+      - taskme-api
+
+networks:
+  taskme-network:
+    driver: bridge
